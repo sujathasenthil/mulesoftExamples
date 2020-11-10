@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="outputxml" format="xml">
+      <types:example format="xml" element="response" location="examples/resonseXml.xml"/>
+    </types:type>
+    <types:type name="fetchResponse" format="json">
+      <types:shape format="weave" example="examples/fetchResponse.json"><![CDATA[%dw 2.0
+
+type fetchResponse = {|
+  empid: Number {"typeId": "int"}, 
+  empname: String, 
+  empStatus: String
+|} {"example": "{\\\"empid\\\":1,\\\"empname\\\":\\\"Sai\\\",\\\"empStatus\\\":\\\"I\\\"}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#6295748e-6221-4b6f-a8af-05de30f19330">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="outputxml"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#da5a7af0-69e5-4a3b-aef7-ad6192ecaea7">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="fetchResponse"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

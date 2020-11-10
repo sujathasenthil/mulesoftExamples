@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="emp-update-employeeFlow" doc:id="65090dbc-bcc2-4150-8d1f-417a420ee042" >
+		<http:listener doc:name="Emp_update_Listener" doc:id="d0064641-e460-4883-8551-70546569ca42" config-ref="HTTP_Listener_config" path="/update-employee" allowedMethods="POST"/>
+		<logger level="INFO" doc:name="Logger" doc:id="a1b5f3bc-e739-48f5-ac43-2e5ae2763c81" message="started emp update flow and receive payload is #[payload]"/>
+		<db:update doc:name="Update" doc:id="356ee51e-3798-4f98-a041-4ca4e633ca39" config-ref="Database_Config">
+			<db:sql ><![CDATA[update emptable set emp_satus = :emp_satus where emp_id = :emp_id]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"emp_satus": payload.emp.satus,
+	"emp_id": payload.emp.empid
+}]]]></db:input-parameters>
+		</db:update>
+		<ee:transform doc:name="Transform Message" doc:id="6295748e-6221-4b6f-a8af-05de30f19330" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+---
+{
+	response:
+	{
+		status: 200,
+		message: "Success"
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="9f2c35df-ba68-4405-9fff-5c899dc2101e" message="completed emp update and responded payload is  #{#[payload]"/>
+	</flow>
+</mule>

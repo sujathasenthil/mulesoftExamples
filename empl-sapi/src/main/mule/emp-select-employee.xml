@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<db:config name="Database_Config1" doc:name="Database Config" doc:id="3d057337-2f6c-436c-a034-c955a3b52251" >
+		<db:oracle-connection host="localhost" user="system" password="Sai" instance="xe" />
+	</db:config>
+	<flow name="emp-select-employeeFlow" doc:id="c655f100-27ca-4f05-a9d6-89c052cd2600" >
+		<http:listener doc:name="Listener" doc:id="92aa3f1d-b4b4-4e76-b5ec-5bd78127cf9a" config-ref="HTTP_Listener_config" path="/fetch-employee" allowedMethods="GET"/>
+		<logger level="INFO" doc:name="Logger" doc:id="d7d85cce-1f5e-4998-8772-7dcb43f48eb0" message="*flow started #[payload]"/>
+		<db:select doc:name="Select" doc:id="2da291a2-3b67-49bf-ab8e-2b9343bb57ed" config-ref="Database_Config1">
+			<db:sql ><![CDATA[select emp_name, emp_satus from emptable where emp_id = :emp_id]]></db:sql>
+			<db:input-parameters ><![CDATA[#["emp_id": attributes.queryParams.empid]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="da5a7af0-69e5-4a3b-aef7-ad6192ecaea7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	empname: payload[0].EMP_NAME default "",
+	empStatus: payload[0].EMP_SATUS default ""
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="f55f525a-8de8-44fc-894c-4518be4ac0ed" />
+	</flow>
+</mule>
