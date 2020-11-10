@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="65f51f05-034b-4b3a-9e2e-4ae791489849" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<os:object-store name="Object_store" doc:name="Object store" doc:id="b20eef7f-9318-4199-99d2-2d2b975f3bd1" />
+	<flow name="github-objectstoreFlow" doc:id="60e6fd2e-dc92-40f4-b976-f8c5d53bd0a3" >
+		<http:listener doc:name="Listener" doc:id="d46c4e6b-2c33-4e06-968a-1fb32ae7909f" config-ref="HTTP_Listener_config" path="/obj"/>
+		<ee:transform doc:name="Transform Message" doc:id="dce7ce1b-305a-433a-80cd-50944afa59f7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	personId: uuid(),
+	fname: payload.firstname,
+	lname: payload.lastname,
+	age: payload.age,
+	address: payload.address
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<os:store doc:id="364362d9-1916-46ed-8818-408a83325981" key="#[payload.personId]" objectStore="Object_store"/>
+		<ee:transform doc:name="Transform Message" doc:id="e567515e-0c28-4bb4-8ee6-482ecb5988f8" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	personId: payload.personId,
+	message: "Person created"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="github-objectstoreFlow1" doc:id="a66edcbe-3b15-4563-a083-b47b6373c499" >
+		<http:listener doc:name="Listener" doc:id="b15d258a-f94d-4a2b-b917-8df7b3b19db8" config-ref="HTTP_Listener_config" path="/obj/{personId}" allowedMethods="GET"/>
+		<try doc:name="Try" doc:id="bdc1b570-6392-402c-9248-92f733d41e9f" >
+			<os:retrieve doc:name="Retrieve" doc:id="e1d73008-fd68-4a3a-b510-25fe8d450779" key="#[attributes.uriParams.personId]" objectStore="Object_store"/>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="3cee054c-0363-4ce9-b32e-d4ef85293d29" type="OS:KEY_NOT_FOUND">
+					<ee:transform doc:name="Transform Message" doc:id="4e22556b-765d-4f7c-a9d6-90b8920017df" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Key not found!"
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<ee:transform doc:name="Transform Message" doc:id="161d24fe-c16a-43b7-8468-593304118c2c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="github-objectstoreFlow2" doc:id="c05995f2-1a5b-43c8-8331-97c7e6188efc" >
+		<http:listener doc:name="Listener" doc:id="823ea917-c8ae-4230-b36b-1fdd35de85d8" config-ref="HTTP_Listener_config" path="/retrieveObj"/>
+		<os:retrieve-all doc:name="Retrieve all" doc:id="3f645aa1-d021-4bc3-a49d-601778f4219a" objectStore="Object_store"/>
+		<ee:transform doc:name="Transform Message" doc:id="33cd2910-0c9e-42b7-9c05-fef81be05fcf" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
