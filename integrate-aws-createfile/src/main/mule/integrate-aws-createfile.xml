@@ -10,10 +10,10 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 		<http:listener-connection host="0.0.0.0" port="8081" />
 	</http:listener-config>
 	<s3:config name="Amazon_S3_Configuration" doc:name="Amazon S3 Configuration" doc:id="fa4efa03-bd4c-4892-ae1d-33a75115d217" >
-		<s3:basic-connection accessKey="AKIAIPRK7A457DBBBXEQ" secretKey="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" />
+		<s3:basic-connection accessKey="" secretKey="" />
 	</s3:config>
 	<s3:config name="Amazon_S3_Configuration2" doc:name="Amazon S3 Configuration" doc:id="4b5c93f5-be1c-4f83-9fbf-1c099b5b2d91" >
-		<s3:basic-connection accessKey="AKIAIPRK7A457DBBBXEQ" secretKey="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" region="US_EAST_2" />
+		<s3:basic-connection accessKey="" secretKey="" region="US_EAST_2" />
 	</s3:config>
 	<flow name="integrate-aws-createfileFlow" doc:id="1d8b71fa-aa71-4512-8051-926a56c222b0" >
 		<http:listener doc:name="Listener" doc:id="6b752c87-0c78-467a-b608-398cc0c708d1" config-ref="HTTP_Listener_config" path="/aws" allowedMethods="POST"/>
@@ -22,8 +22,8 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 	</flow>
 	<flow name="integrate-aws-createfileFlow1" doc:id="3e36747e-cc61-46c4-8827-629c44fc6c2f" >
 		<http:listener doc:name="Listener" doc:id="4747b18d-3689-4cf1-991e-39600e96dd9b" config-ref="HTTP_Listener_config" allowedMethods="POST" path="/createBucket"/>
-		<s3:create-bucket doc:name="Create bucket" doc:id="f86857f1-18f3-419e-b4e1-440cfdd46e1a" config-ref="Amazon_S3_Configuration" bucketName='#["sujabucket2"]' region="US_EAST_2" acl="PUBLIC_READ_WRITE"/>
-		<s3:create-object doc:name="Create object" doc:id="a6270537-25d4-46f6-ba90-e4c095b11010" config-ref="Amazon_S3_Configuration" bucketName='#["sujabucket2"]' key="jsonfile" acl="PUBLIC_READ_WRITE"/>
+		<s3:create-bucket doc:name="Create bucket" doc:id="f86857f1-18f3-419e-b4e1-440cfdd46e1a" config-ref="Amazon_S3_Configuration" bucketName='#["sujabucket2"]' region="US_EAST_2" acl=""/>
+		<s3:create-object doc:name="Create object" doc:id="a6270537-25d4-46f6-ba90-e4c095b11010" config-ref="Amazon_S3_Configuration" bucketName='#["sujabucket2"]' key="jsonfile" acl=""/>
 		<set-payload value='#["Bucket &amp; Object Created"]' doc:name="Set Payload" doc:id="d91d6263-133e-433f-9c41-354e6c6fa778" />
 	</flow>
 	<flow name="integrate-aws-createfileFlow2" doc:id="aba43d38-9d85-48c8-8f30-21c33af1dc7d" >
