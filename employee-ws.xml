@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<configuration-properties doc:name="Configuration properties" doc:id="ac5a12f1-f59e-4de9-b30e-f019fecf4820" file="config.yaml" />
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="f1ae09f1-c228-46eb-8eed-a5e9e043b8e3" basePath="emp-api">
+		<http:listener-connection host="0.0.0.0" port="${http.port}" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="6442bf5f-b2d6-4349-84f8-ba62d00f7fa6" >
+		<db:my-sql-connection host="${db.host}" port="${db.port}" user="${db.user}" password="${secure::db.pwd}" database="${db.database}" />
+	</db:config>
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="444f905a-81fc-4861-a36d-30de6d902db4" file="config.yaml" key="abcdefghijklmnop" >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+	<flow name="AllemployeesFlow" doc:id="6d164fa5-41d4-43a9-a994-5e16f5316021" >
+		<http:listener doc:name="GET /employees" doc:id="9002b117-6da7-445c-8ab8-0632bad62874" config-ref="HTTP_Listener_config" path="/employees/"/>
+		<db:select doc:id="bc787edf-aca8-4697-b205-f1e152229cfe" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from emptable]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="1542ef34-7f9c-423d-a623-4c1cfb9ef0bc" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="e7b6a5a1-db6b-45da-8317-b7d11d96fb70" message="payload"/>
+	</flow>
+	<flow name="FetchemployeeFlow" doc:id="1cbdddca-978f-457e-ae41-02d9a1bd7b7a" >
+		<http:listener doc:name="Listener" doc:id="ce2d6c5e-84f0-453c-affb-c4aa4eba8291" config-ref="HTTP_Listener_config" path="/employee/{emplD}"/>
+		<logger level="INFO" doc:name="Logger" doc:id="ee8b9432-898b-497b-ace0-d6a679333530" message="flow started"/>
+		<db:select doc:name="Select" doc:id="f188baf3-1d7a-4c8d-8b62-4555a3429689" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from emptable where employeeID=:employeeID]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"employeeID": attributes.uriParams.emplD
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="5c6a2342-92bf-457f-b9c1-e80b3dafeaf1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="AddemployeeFlow" doc:id="5b4b376d-496c-48a0-8b75-d41b7940444d" >
+		<http:listener doc:name="Listener" doc:id="2b8aac5d-c978-41b6-a302-fa19c9d33c3e" config-ref="HTTP_Listener_config" path="add-emp" allowedMethods="POST"/>
+		<db:insert doc:name="Insert" doc:id="8553d690-50ca-4a6c-aa44-e555b4647197" config-ref="Database_Config">
+			<db:sql ><![CDATA[insert into employee.emptable (employeeId,
+    firstName,
+    lastName,
+    address,
+    phone,
+    email,dateOfBirth) values(:employeeId,
+    :firstName,
+    :lastName,
+    :address,
+    :phone,
+    :email,:dateOfBirth)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"employeeId": payload.employeeId,
+	"firstName": payload.firstName,
+	"lastName": payload.lastName,
+	"address": payload.address,
+	"phone": payload.phone,
+	"email": payload.email,
+	"dateOfBirth": payload.dateOfBirth
+}]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="Transform Message" doc:id="6508aa65-3096-4a02-9e46-9ffe561dc194" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "Employee Details Added Successfully!"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="e1652fd1-c22d-49cc-8606-c805e70b5958" message="*Record inserted* #[payload]"/>
+	</flow>
+	<flow name="DeleteEmployeeFlow" doc:id="bb1d9091-9158-4871-a268-86495c8ceff9" >
+		<http:listener doc:name="Listener" doc:id="e44e9367-7d7b-4e15-86a5-10950af4b047" config-ref="HTTP_Listener_config" path="/del-emp/{empid}" allowedMethods="DELETE"/>
+		<db:delete doc:name="Delete" doc:id="9830260f-b6c0-4d41-b75d-d3d6788df073" config-ref="Database_Config">
+			<db:sql ><![CDATA[Delete from employee.emptable where employeeId= :employeeId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"employeeId": attributes.uriParams.empid
+}]]]></db:input-parameters>
+		</db:delete>
+		<ee:transform doc:name="Transform Message" doc:id="ca3dc784-8984-4f31-ab52-1fa9e8fb977d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: 200,
+	message: "Employee Record Deleted Successfully!"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="4acff0a7-7355-48e2-ac53-6846cf623a76" message="*Record deleted* "/>
+	</flow>
+	<flow name="PATCHemployeeFlow" doc:id="49c02304-b468-4a30-93ce-83b915c754ce" >
+		<http:listener doc:name="Listener" doc:id="b3a7b1e5-c42d-4c41-94f9-61c3ef74308f" config-ref="HTTP_Listener_config" allowedMethods="PATCH" path="/update-emp"/>
+		<db:update doc:name="Update" doc:id="b8023756-306a-4b09-8c59-bc8419b10bcf" config-ref="Database_Config">
+			<db:sql ><![CDATA[update employee.emptable set phone = :phone where employeeId = :employeeId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"phone": payload.phone,
+	"employeeId": payload.employeeId
+}]]]></db:input-parameters>
+		</db:update>
+		<ee:transform doc:name="Transform Message" doc:id="6f032206-5cd0-4668-8c62-0a78a60db7a3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+		status: 200,
+		message: "Record Updated Successfully!"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="036be79f-34b7-4e2b-9548-e96d49744be9" message="updated Record payload is  #[payload]"/>
+	</flow>
+	<flow name="PUTEmployeeFlow" doc:id="eebe0cc3-c2a4-4132-8c7d-45e1a834f0da" >
+		<http:listener doc:name="Listener" doc:id="16fa8e42-2089-4d19-bd61-77ebee946317" config-ref="HTTP_Listener_config" path="update-emp" allowedMethods="PUT"/>
+		<db:update doc:name="Update" doc:id="dcf9539d-36ee-4e7e-81ff-69921037fcf0" config-ref="Database_Config" >
+			<db:sql ><![CDATA[update employee.emptable set firstName = :firstName, lastName = :lastName, address = :address, phone = :phone, email = :email, dateOfBirth = :dateOfBirth where employeeId = :employeeId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"employeeId": payload.employeeId,
+	"firstName": payload.firstName,
+	"lastName": payload.lastName,
+	"address": payload.address,
+	"phone": payload.phone,
+	"email": payload.email,
+	"dateOfBirth": payload.dateOfBirth
+}]]]></db:input-parameters>
+		</db:update>
+		<ee:transform doc:name="Transform Message" doc:id="f07e6b28-5b21-4062-88de-fb5bb311df7e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+		status: 200,
+		message: "Record Updated Successfully!"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="803cabb8-ce29-482a-b13a-23ad4484297c" message="updated Record payload is  #[payload]" />
+	</flow>
+</mule>
